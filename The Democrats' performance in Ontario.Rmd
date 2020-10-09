@@ -1,0 +1,215 @@
+---
+title: "The Democrats' performance in Ontario"
+author: "Mingmeijia"
+header-includes:
+  - \usepackage{booktabs}
+  - \usepackage{subfig}
+output:
+  pdf_document:
+    latex_engine: xelatex
+  html_document:
+    df_print: paged
+---
+# Introduction
+Ontario is the center of economy and humanities in Canada. 40% of the population of Canada lives in this province; it represents nearly 40% of the seats in the House of Representatives. Therefore, winning Ontario is considered one of the most important tasks in one's campaign. So what I'm going to look at today is how are the Liberals doing in Ontario?
+
+# Survey Methodology
+## Pupuplation,frame,sample
+The target population is all the Canadians who filled out the voter registration form. The sampling frame is a list of registered forms of households. When the confidence level is 95%, the sampling error is 3%, then the sample size should be at least 1067. 
+##Sampling method and statistical properties
+To randomly select 1067 forms, I will use SRSWOR. This method brings a design-unbiased estimator for the population mean $$\mu_y$$, the design-based variance of $$\bar{y}$$ and an unbiased variance estimator for $$\bar{y}$$. 
+## Data collection
+ For older people, we contact them with home number and emails, because they use their home cell more often. For young people, we will contact them with cell phones and emails.
+## Cost
+The cost per survey is $1.69. The cost includes the operational fee, internet services, etc.
+The cost of the polling commensurate with sample size, the length of the survey.
+## Non-response
+The non-response will increase the variance of the polling result. To reduce the effect of non-repose, I propose these solutions. For older people, we contact them with home number and emails, because they use their home cell more often. For young people, we contact them with cell phones and emails. If we get a non-response at first, we should contact them again in twos. Also, we should send out the survey to young people on weekends or after work hours.
+## Privacy
+We promise to respect every respondent's privacy. In order to better protect personal information from leaking to the parties other than us, I will list all the information as classified information and set limited access to the team member. Also, I will keep track on the person who has access to all the file and make them sign a confidential agreement, in this way, they have to promise not to put these information out other than conducting this survey.
+
+
+# Survey
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(knitr)
+```
+```{r speedgun, out.width=".7\\linewidth", fig.align="center", fig.cap="Survey questions"}
+# out.width=".7\\linewidth" sets the output
+# width to 70% of the paragraph width.
+include_graphics('304_survey.jpeg')
+```
+
+\newpage
+# Simulate
+```{r,echo=FALSE}
+library(tidyverse)
+#1. Creating a dataframe
+N=14570000
+set.seed(1005165465)
+```
+
+## Sex 
+Assumption: After search the data, I found out the sex of population follows bernoulli distribution with p = 0.5033.(percentage of male)
+```{r,echo=FALSE}
+#Sex
+Sex<-rbernoulli(N,p=0.5033)  
+Sex<-ifelse(Sex==TRUE,'MALE','FEMALE')
+```
+
+## Race
+Assumption: After search the data, I found out it could be seperate to four types by populaton :"Canadian", "European", "Asian", "Others". The probobaility is 0.23,0.51,0.09,0.17
+```{r,echo=FALSE}
+data.race<-c("Canadian", "European", "Asian", "Others")
+Race<-sample(data.race,N,replace=TRUE,prob=c(0.23,0.51,0.09,0.17))
+
+#Data Frame
+data <- data.frame(Sex,Race)
+```
+
+## Age
+Assumption: After search the data, I found out when people older than 65, percentage of female in population is much bigher than male. So I think age and sex has a relationship. For Only Canadian citizens aged 18 or older can vote, so I separate age to four group "18-24", "25-44",  "45-64", ">=65".
+```{r,echo=FALSE}
+#Insert an empty column
+data$Age<-NA
+
+#Calculate population per condition group
+N.male<-nrow(data[data$Sex=='MALE',])
+N.female<-nrow(data[data$Sex=='FEMALE',])
+
+#Simulate values in new column based on conditions
+age <- c("18-24", "25-44",  "45-64", ">=65")
+data.age.male<-sample(age,N.male,replace=TRUE,prob=c(0.1,0.35,0.35,0.2))
+data.age.female<-sample(age,N.female,replace=TRUE,prob=c(0.1,0.35,0.3,0.25))
+data[data$Sex=='MALE',"Age"]<-data.age.male
+data[data$Sex=='FEMALE',"Age"]<-data.age.female
+```
+
+## Education
+Assumption: After search the data, I found out female are better educated in Ontario. So I think education level is depend on sex. I seperate it into two types "University certificate or higher", "Others". The property for femake is 34%, the property for male is 30%
+```{r,echo=FALSE}
+#Insert an empty column
+data$Edu<-NA
+
+#Simulate values in new column based on conditions
+Edu <- c("Bachelor or higher", "Others")
+data.edu.male<-sample(Edu,N.male,replace=TRUE,prob=c(0.3,0.7))
+data.edu.female<-sample(Edu,N.female,replace=TRUE,prob=c(0.34,0.66))
+data[data$Sex=='MALE',"Edu"]<-data.edu.male
+data[data$Sex=='FEMALE',"Edu"]<-data.edu.female
+```
+
+## Party
+Assumption: After doing research, I found out that age have high relation with party selection. I separate party into 4 types "Liberal", "Conservative",  "Others", "None". Overall, the voting rate is around 60% of the population. Among these people older than 45 years old, 30% votes for Liberal, 50% votes for Conservative, 20% votes for other parties. For people between 18 to 44 years old, 35% votes for Liberal, 20% votes for Conservative, the rest vote for other parties. The data is showed below. 
+```{r,echo=FALSE}
+#Insert an empty column
+data$Party<-NA
+
+#Calculate population per condition group
+N.older<-nrow(data[which((data$Age=="45-64")|(data$Age==">=65")),]) 
+N.younger<-nrow(data[which((data$Age=="18-24")|(data$Age=="25-44")),])
+
+#Simulate values in new column based on conditions
+Party <- c("Liberal", "Conservative", "Others", "None")
+data.party.older<-sample(Party,N.older,replace=TRUE,prob=c(0.18,0.28,0.14,0.4))
+data.party.younger<-sample(Party,N.younger,replace=TRUE,prob=c(0.2,0.14,0.26,0.4))
+data[which((data$Age=="45-64")|(data$Age==">=65")),"Party"]<- data.party.older
+data[which((data$Age=="18-24")|(data$Age=="25-44")),"Party"]<-data.party.younger
+```
+
+#Sampling
+```{r,echo=FALSE}
+#Perform Sampling on your population dataframe by SRSWOR, sample size n=1067
+#select row numbers randomly
+row_sel<-sample(1:N,1067)
+sample.srs<-data[row_sel,]
+```
+
+# Plot
+```{r,echo=FALSE}
+#vote_lib = nrow(sample.srs[sample.srs$Party=="Liberal",])
+#vote_rate_lib = vote_lib/1067
+
+#Age
+ggplot(sample.srs,aes(x=Age, fill=Party))+geom_bar() +
+  geom_text(aes(label=stat(count)),stat='count',size=2.5,
+            color='white',position=position_stack(vjust=0.5))+
+   labs( x = "Age", y = "Party",
+            title ="Party of Age",
+            subtitle = "Subgroup: Age",
+            caption = "Distribution of Age, stacking by Party")+
+  theme(legend.position = "bottom",
+        plot.title=element_text(colour='Dark blue', hjust=0.5,face='bold'),
+        plot.subtitle=element_text(colour='light blue', hjust=1),
+        axis.text.x=element_text(angle=-25)
+  )
+  
+#Race
+ggplot(sample.srs,aes(x=Race, fill=Party))+geom_bar() +
+  geom_text(aes(label=stat(count)),stat='count',size=2.5,
+            color='white',position=position_stack(vjust=0.5))+
+  labs( x = "Race", y = "Party",
+            title ="Party of Race",
+            subtitle = "Subgroup: Race",
+            caption = "Distribution of Race, stacking by Party")+
+  theme(legend.position = "bottom",
+        plot.title=element_text(colour='Dark blue', hjust=0.5,face='bold'),
+        plot.subtitle=element_text(colour='light blue', hjust=1),
+        axis.text.x=element_text(angle=-25)
+  )
+
+#Education
+ggplot(sample.srs,aes(x=Edu, fill=Party))+geom_bar() +
+  geom_text(aes(label=stat(count)),stat='count',size=2.5,
+            color='white',position=position_stack(vjust=0.5))+
+  labs( x = "Edu", y = "Party",
+            title ="Party of Edu",
+            subtitle = "Subgroup: Edu",
+            caption = "Distribution of Edu, stacking by Party")+
+  theme(legend.position = "bottom",
+        plot.title=element_text(colour='Dark blue', hjust=0.5,face='bold'),
+        plot.subtitle=element_text(colour='light blue', hjust=1),
+        axis.text.x=element_text(angle=-25)
+  )
+
+#Sex
+ggplot(sample.srs,aes(x=Sex, fill=Party))+geom_bar() +
+  geom_text(aes(label=stat(count)),stat='count',size=2.5,
+            color='white',position=position_stack(vjust=0.5))+
+  labs( x = "Sex", y = "Party",
+            title ="Party of Sex",
+            subtitle = "Subgroup: Sex",
+            caption = "Distribution of Sex, stacking by Party")+
+  theme(legend.position = "bottom",
+        plot.title=element_text(colour='Dark blue', hjust=0.5,face='bold'),
+        plot.subtitle=element_text(colour='light blue', hjust=1),
+        axis.text.x=element_text(angle=-25)
+  )
+```
+\newpage
+
+# Summary
+The purpose of the survey is to study the support rate for liberal in Ontario. Only 60% of Canadian Adults will actively vote, age plays a crucial part in whether people vote for certain parties; we can see that for people older than 45 will support Conservative, however young people like Liberal more. According to the graph Party of age, without none and others, 65% of people older the 45 will vote for conservative, for the young people who are between 18-44, 56% of them will vote for Liberal. Since there are more senior voters (45+) than young voters, conservative will have more advantages in getting elected. I think there is one way to solve the problem; The Liberal should encourage more young people to vote and increase the budget on getting these young people to vote for Liberal. Because apparently, Liberal is more popular among young people. 
+
+# Weakness
+There are limited time for me to collect ideal data, for example, I can not find out what is the exact number of people who has already became a memeber of each party.
+
+# Reference & Apppendix
+Party:
+https://www.ourcommons.ca/members/en
+Age & Gender:
+https://www.statista.com/statistics/444858/canada-resident-population-by-gender-and-age-group/
+Edu:
+https://www12.statcan.gc.ca/census-recensement/2016/dp-pd/hlt-fst/edu-sco/Table.cfm?Lang=E&T=11&Geo=00&SP=1&view=2&age=2&sex=1
+Race:
+https://www12.statcan.gc.ca/census-recensement/2016/as-sa/98-200-x/2016016/98-200-x2016016-eng.cfm
+
+
+
+
+
+
+
+
+
+
